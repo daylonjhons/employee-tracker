@@ -23,7 +23,7 @@ function runApp() {
         name: "startQuestions",
         type: "list",
         message: "what would you like to do?",
-        choices: ["view all departments", "add department", "delete department", "view all roles", "add role", "delete role", "view all employees", "add employee", "update an employee role", "delete employee", "view employees by department", "update an employee manager", "view department budget", "quit"]
+        choices: ["view all departments", "add department", "delete department", "view all roles", "add role", "delete role", "view all employees", "add employee", "update an employee role", "delete employee", "view employees by department", "update an employee manager", "view department budget", "quit",]
     }).then(function (answer) {
         switch (answer.startQuestions) {
             case "view all departments":
@@ -72,6 +72,7 @@ function runApp() {
     });
 }
 
+
 function viewAllDepartments() {
     connection.query("SELECT * FROM department", function (err, data) {
         if (err) {
@@ -97,6 +98,25 @@ function addDepartment() {
                 return;
             }
             console.log("Added Department");
+            runApp();
+        });
+    });
+}
+
+function deleteDepartment() {
+    inquirer.prompt([
+        {
+            message: "Enter the ID of the department you want to delete:",
+            type: "number",
+            name: "departmentId"
+        }
+    ]).then(function (res) {
+        connection.query("DELETE FROM department WHERE id = ?", [res.departmentId], function (err, data) {
+            if (err) {
+                console.error("Error deleting department:", err);
+                return;
+            }
+            console.log("Deleted Department");
             runApp();
         });
     });
@@ -137,6 +157,25 @@ function addRole() {
                 return;
             }
             console.log("Added Role");
+            runApp();
+        });
+    });
+}
+
+function deleteRole() {
+    inquirer.prompt([
+        {
+            message: "Enter the ID of the role you want to delete:",
+            type: "number",
+            name: "roleId"
+        }
+    ]).then(function (res) {
+        connection.query("DELETE FROM role WHERE id = ?", [res.roleId], function (err, data) {
+            if (err) {
+                console.error("Error deleting role:", err);
+                return;
+            }
+            console.log("Deleted Role");
             runApp();
         });
     });
@@ -222,15 +261,15 @@ function addEmployee() {
 }
 
 function updateEmployeeRole() {
-    connection.query("SELECT id, CONCAT(first_name, ' ', last_name) AS full_name FROM employee WHERE manager_id IS NOT NULL", function (err, employees) {
+    connection.query("SELECT id, title FROM role", function (err, roles) {
         if (err) {
-            console.error("Error retrieving employee data:", err);
+            console.error("Error retrieving role data:", err);
             return;
         }
 
-        connection.query("SELECT id, title FROM role", function (err, roles) {
+        connection.query("SELECT id, CONCAT(first_name, ' ', last_name) AS full_name FROM employee", function (err, employees) {
             if (err) {
-                console.error("Error retrieving role data:", err);
+                console.error("Error retrieving employee data:", err);
                 return;
             }
 
@@ -260,3 +299,136 @@ function updateEmployeeRole() {
         });
     });
 }
+
+function deleteEmployee() {
+    inquirer.prompt([
+        {
+            message: "Enter the ID of the employee you want to delete:",
+            type: "number",
+            name: "employeeId"
+        }
+    ]).then(function (res) {
+
+        connection.query("DELETE FROM employee WHERE id = ?", [res.employeeId], function (err, data) {
+            if (err) {
+                console.error("Error deleting employee:", err);
+                return;
+            }
+            console.log("Deleted Employee!");
+            runApp();
+        });
+    });
+}
+
+function viewEmployeesByDepartment() {
+    connection.query("SELECT name FROM department", function (err, departments) {
+        if (err) {
+            console.error("Error retrieving department data:", err);
+            return;
+        }
+
+        inquirer.prompt({
+            name: 'departmentName',
+            type: 'list',
+            message: 'Select a department to view employees:',
+            choices: departments.map(dept => dept.name)
+        }).then(function (answer) {
+            const query = `
+                SELECT 
+                    e.id AS id,
+                    e.first_name AS first_name,
+                    e.last_name AS last_name,
+                    r.title AS title,
+                    r.salary AS salary,
+                    CONCAT(m.first_name, ' ', m.last_name) AS manager
+                FROM 
+                    employee e
+                INNER JOIN 
+                    role r ON e.role_id = r.id
+                INNER JOIN 
+                    department d ON r.department_id = d.id
+                LEFT JOIN 
+                    employee m ON e.manager_id = m.id
+                WHERE 
+                    d.name = ?`;
+
+            connection.query(query, [answer.departmentName], function (err, data) {
+                if (err) {
+                    console.error("Error retrieving employee data by department:", err);
+                    return;
+                }
+                console.table(data);
+                runApp();
+            });
+        });
+    });
+}
+
+function updateEmployeeManager() {
+    connection.query("SELECT id, CONCAT(first_name, ' ', last_name) AS full_name FROM employee", function (err, employees) {
+        if (err) {
+            console.error("Error retrieving employee data:", err);
+            return;
+        }
+
+        inquirer.prompt([
+            {
+                message: "Which employee's manager do you want to update?",
+                type: "list",
+                name: "employeeId",
+                choices: employees.map(emp => ({ name: emp.full_name, value: emp.id }))
+            },
+            {
+                message: "Select the new manager:",
+                type: "list",
+                name: "manager_id",
+                choices: employees.map(emp => ({ name: emp.full_name, value: emp.id }))
+            }
+        ]).then(function (res) {
+            connection.query("UPDATE employee SET manager_id = ? WHERE id = ?", [res.manager_id, res.employeeId], function (err, data) {
+                if (err) {
+                    console.error("Error updating employee manager:", err);
+                    return;
+                }
+                console.log("Updated Employee Manager!");
+                runApp();
+            });
+        });
+    });
+}
+
+function viewDepartmentBudget() {
+    connection.query("SELECT id, name FROM department", function (err, departments) {
+        if (err) {
+            console.error("Error retrieving department data:", err);
+            return;
+        }
+
+        inquirer.prompt([
+            {
+                message: "Select a department to view its total utilized budget:",
+                type: "list",
+                name: "departmentId",
+                choices: departments.map(dept => ({ name: dept.name, value: dept.id }))
+            }
+        ]).then(function (res) {
+            const departmentId = res.departmentId;
+            const query = `
+                SELECT SUM(r.salary) AS total_budget
+                FROM employee e
+                INNER JOIN role r ON e.role_id = r.id
+                WHERE r.department_id = ?`;
+
+            connection.query(query, [departmentId], function (err, result) {
+                if (err) {
+                    console.error("Error retrieving department budget:", err);
+                    return;
+                }
+                const totalBudget = result[0].total_budget;
+                console.log(`Total Utilized Budget for Selected Department: $${totalBudget}`);
+                runApp();
+            });
+        });
+    });
+}
+
