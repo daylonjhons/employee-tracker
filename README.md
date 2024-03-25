@@ -2,6 +2,8 @@
 
 ## Description
 
+The command-line application simplifies employee management by allowing users to view, add, delete, and update departments, roles, and employees easily. It provides a clear interface for viewing department names and IDs, role details including titles, IDs, associated departments, and salaries, as well as comprehensive employee information such as names, IDs, job titles, departments, salaries, and managers. Users can seamlessly add new departments, roles, and employees with minimal input, and update employee roles with just a few clicks. Overall, the application streamlines organizational tasks related to employee data management.
+
 ## Table of Contents
 - [Description](##Description)
 - [Video](##Video)
