@@ -104,20 +104,29 @@ function addDepartment() {
 }
 
 function deleteDepartment() {
-    inquirer.prompt([
-        {
-            message: "Enter the ID of the department you want to delete:",
-            type: "number",
-            name: "departmentId"
+    connection.query("SELECT id, name FROM department", function (err, departments) {
+        if (err) {
+            console.error("Error retrieving department data:", err);
+            return;
         }
-    ]).then(function (res) {
-        connection.query("DELETE FROM department WHERE id = ?", [res.departmentId], function (err, data) {
-            if (err) {
-                console.error("Error deleting department:", err);
-                return;
-            }
-            console.log("Deleted Department");
-            runApp();
+
+        inquirer.prompt({
+            name: 'departmentName',
+            type: 'list',
+            message: 'Select a department to delete:',
+            choices: departments.map(dept => dept.name)
+        }).then(function (answer) {
+            const selectedDepartment = departments.find(dept => dept.name === answer.departmentName);
+            const departmentId = selectedDepartment.id;
+
+            connection.query("DELETE FROM department WHERE id = ?", [departmentId], function (err, data) {
+                if (err) {
+                    console.error("Error deleting department:", err);
+                    return;
+                }
+                console.log("Deleted Department");
+                runApp();
+            });
         });
     });
 }
@@ -163,20 +172,29 @@ function addRole() {
 }
 
 function deleteRole() {
-    inquirer.prompt([
-        {
-            message: "Enter the ID of the role you want to delete:",
-            type: "number",
-            name: "roleId"
+    connection.query("SELECT id, title FROM role", function (err, roles) {
+        if (err) {
+            console.error("Error retrieving role data:", err);
+            return;
         }
-    ]).then(function (res) {
-        connection.query("DELETE FROM role WHERE id = ?", [res.roleId], function (err, data) {
-            if (err) {
-                console.error("Error deleting role:", err);
-                return;
-            }
-            console.log("Deleted Role");
-            runApp();
+
+        inquirer.prompt({
+            name: 'roleTitle',
+            type: 'list',
+            message: 'Select a role to delete:',
+            choices: roles.map(role => role.title)
+        }).then(function (answer) {
+            const selectedRole = roles.find(role => role.title === answer.roleTitle);
+            const roleId = selectedRole.id;
+
+            connection.query("DELETE FROM role WHERE id = ?", [roleId], function (err, data) {
+                if (err) {
+                    console.error("Error deleting role:", err);
+                    return;
+                }
+                console.log("Deleted Role");
+                runApp();
+            });
         });
     });
 }
@@ -222,6 +240,8 @@ function addEmployee() {
                 console.error("Error retrieving manager data:", err);
                 return;
             }
+
+            managers.unshift({ id: null, manager_name: "none" });
 
             inquirer.prompt([
                 {
@@ -301,21 +321,29 @@ function updateEmployeeRole() {
 }
 
 function deleteEmployee() {
-    inquirer.prompt([
-        {
-            message: "Enter the ID of the employee you want to delete:",
-            type: "number",
-            name: "employeeId"
+    connection.query("SELECT id, CONCAT(first_name, ' ', last_name) AS full_name FROM employee", function (err, employees) {
+        if (err) {
+            console.error("Error retrieving employee data:", err);
+            return;
         }
-    ]).then(function (res) {
 
-        connection.query("DELETE FROM employee WHERE id = ?", [res.employeeId], function (err, data) {
-            if (err) {
-                console.error("Error deleting employee:", err);
-                return;
-            }
-            console.log("Deleted Employee!");
-            runApp();
+        inquirer.prompt({
+            name: 'employeeName',
+            type: 'list',
+            message: 'Select an employee to delete:',
+            choices: employees.map(emp => emp.full_name)
+        }).then(function (answer) {
+            const selectedEmployee = employees.find(emp => emp.full_name === answer.employeeName);
+            const employeeId = selectedEmployee.id;
+
+            connection.query("DELETE FROM employee WHERE id = ?", [employeeId], function (err, data) {
+                if (err) {
+                    console.error("Error deleting employee:", err);
+                    return;
+                }
+                console.log("Deleted Employee!");
+                runApp();
+            });
         });
     });
 }
