@@ -15,7 +15,7 @@
 ![Alt text](<images/Screenshot 2024-03-24 at 11.27.10 PM.png>)
 ![Alt text](<images/Screenshot 2024-03-24 at 11.27.24 PM.png>)
 
-##Video 
+## Video 
 
 Video of application
 
